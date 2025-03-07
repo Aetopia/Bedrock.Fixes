@@ -44,7 +44,6 @@ DWORD ThreadProc(PVOID pParameter)
 
     HSTRING hString = {};
     WindowsCreateString(RuntimeClass_Windows_ApplicationModel_Core_CoreApplication,
-
                         lstrlenW(RuntimeClass_Windows_ApplicationModel_Core_CoreApplication), &hString);
 
     ICoreImmersiveApplication *pApplication = {};
