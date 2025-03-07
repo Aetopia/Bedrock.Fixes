@@ -61,7 +61,7 @@ Now the fix will applied on Windows Startup.
 
 ## Usage
 
-- Download the latest version of Bedrock Fixes from GitHub Releases.
+- Download the latest version of Bedrock Fixes from [GitHub Releases](https://github.com/Aetopia/Bedrock.Fixes/releases).
 
 - Following relevant instructions for each fix if applicable.
 
