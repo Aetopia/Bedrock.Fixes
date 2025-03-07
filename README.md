@@ -77,7 +77,7 @@ Now the fix will applied on Windows Startup.
 
     - Can be applied when the game is launched.
 
-## Building
+## Build
 1. Install [MSYS2](https://www.msys2.org/) & [UPX](https://upx.github.io/) for optional compression.
 
 2. Update the MSYS2 Environment until there are no pending updates using:
