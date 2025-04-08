@@ -67,7 +67,7 @@ Now the fix will applied on Windows Startup.
 
 - Dynamic Link Library Based Fixes:
 
-    - Can be injecting using your favorite injectors & launchers.
+    - Can be injected using your favorite injectors & launchers.
 
     - Can be loaded by hijacking other dynamic link libraries.
 
