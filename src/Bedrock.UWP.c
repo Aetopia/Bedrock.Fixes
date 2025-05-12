@@ -11,9 +11,21 @@
 #include <winstring.h>
 #include <windows.applicationmodel.core.h>
 
-HRESULT (*__put_PointerCursor__)(ICoreWindow *, LPUNKNOWN) = {};
+HRESULT (*__put_PointerCursor)(ICoreWindow *, LPUNKNOWN) = {};
 
-HRESULT _put_PointerCursor_(ICoreWindow *This, LPUNKNOWN value)
+PVOID __wrap_memcpy(PVOID Destination, PVOID Source, SIZE_T Count)
+{
+    __movsb(Destination, Source, Count);
+    return Destination;
+}
+
+PVOID __wrap_memset(PVOID Destination, BYTE Data, SIZE_T Count)
+{
+    __stosb(Destination, Data, Count);
+    return Destination;
+}
+
+HRESULT _put_PointerCursor(PVOID This, PVOID value)
 {
     ICoreCursor *pCursor = {};
     ICoreWindow_get_PointerCursor(This, &pCursor);
@@ -21,21 +33,19 @@ HRESULT _put_PointerCursor_(ICoreWindow *This, LPUNKNOWN value)
     if (!pCursor || !value)
     {
         Rect rcClient = {};
-        ICoreWindow_get_Bounds(This, &rcClient);
+        PVOID pWindow = {};
 
-        ICoreWindow2 *pWindow = {};
-        ICoreWindow_QueryInterface(This, &IID_ICoreWindow2, (PVOID *)&pWindow);
+        ICoreWindow_get_Bounds(This, &rcClient);
+        ICoreWindow_QueryInterface(This, &IID_ICoreWindow2, &pWindow);
 
         ICoreWindow2_put_PointerPosition(pWindow,
                                          (Point){rcClient.X + rcClient.Width / 2, rcClient.Y + rcClient.Height / 2});
-
         ICoreWindow2_Release(pWindow);
     }
 
     if (pCursor)
         ICoreCursor_Release(pCursor);
-
-    return __put_PointerCursor__(This, value);
+    return __put_PointerCursor(This, value);
 }
 
 DWORD ThreadProc(PVOID pParameter)
@@ -57,7 +67,7 @@ DWORD ThreadProc(PVOID pParameter)
     ICoreWindow *pWindow = {};
     ICoreApplicationView_get_CoreWindow(pView, &pWindow);
 
-    MH_CreateHook(pWindow->lpVtbl->put_PointerCursor, &_put_PointerCursor_, (PVOID *)&__put_PointerCursor__);
+    MH_CreateHook(pWindow->lpVtbl->put_PointerCursor, &_put_PointerCursor, (PVOID *)&__put_PointerCursor);
     MH_EnableHook(pWindow->lpVtbl->put_PointerCursor);
 
     ICoreWindow_Release(pWindow);

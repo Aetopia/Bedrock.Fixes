@@ -29,5 +29,7 @@ VOID WinMainCRTStartup()
 
     IPackageDebugSettings_Release(pSettings);
 
+    CoUninitialize();
+
     ExitProcess(EXIT_SUCCESS);
 }

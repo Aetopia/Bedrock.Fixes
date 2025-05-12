@@ -2,38 +2,49 @@
 #define COBJMACROS
 #define WIDL_C_INLINE_WRAPPERS
 
-#include <d3d11.h>
+#include <d3d11_1.h>
 #include <MinHook.h>
-#include <dxgi1_2.h>
 #include <appmodel.h>
 
 BOOL fFallback = {}, fForce = {}, fFlag = {};
+HRESULT (*__Present)(LPUNKNOWN, UINT, UINT) = {};
+HRESULT (*__ResizeBuffers)(LPUNKNOWN, UINT, UINT, UINT, DXGI_FORMAT, UINT) = {};
+HRESULT (*__CreateSwapChainForCoreWindow)(LPUNKNOWN, LPUNKNOWN, LPUNKNOWN, DXGI_SWAP_CHAIN_DESC1 *, LPUNKNOWN,
+                                          IDXGISwapChain1 **ppSwapChain) = {};
 
-HRESULT (*__Present__)(LPUNKNOWN, UINT, UINT) = {};
-
-HRESULT _Present_(LPUNKNOWN This, UINT SyncInterval, UINT Flags)
+PVOID __wrap_memcpy(PVOID Destination, PVOID Source, SIZE_T Count)
 {
-    return fFlag ? __Present__(This, fForce ? (UINT){} : SyncInterval,
-                               fForce         ? DXGI_PRESENT_ALLOW_TEARING
-                               : SyncInterval ? Flags
-                                              : DXGI_PRESENT_ALLOW_TEARING)
-                 : DXGI_ERROR_DEVICE_RESET;
+    __movsb(Destination, Source, Count);
+    return Destination;
 }
 
-HRESULT (*__ResizeBuffers__)(LPUNKNOWN, UINT, UINT, UINT, DXGI_FORMAT, UINT) = {};
-
-HRESULT _ResizeBuffers_(LPUNKNOWN This, UINT BufferCount, UINT Width, UINT Height, DXGI_FORMAT NewFormat,
-                        UINT SwapChainFlags)
+PVOID __wrap_memset(PVOID Destination, BYTE Data, SIZE_T Count)
 {
-    return __ResizeBuffers__(This, BufferCount, Width, Height, NewFormat, DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING);
+    __stosb(Destination, Data, Count);
+    return Destination;
 }
 
-HRESULT (*__CreateSwapChainForCoreWindow__)(LPUNKNOWN, LPUNKNOWN, LPUNKNOWN, DXGI_SWAP_CHAIN_DESC1 *, LPUNKNOWN,
-                                            IDXGISwapChain1 **ppSwapChain) = {};
+HRESULT _Present(LPUNKNOWN This, UINT SyncInterval, UINT Flags)
+{
+    if (fForce)
+        SyncInterval = (UINT){};
 
-HRESULT _CreateSwapChainForCoreWindow_(LPUNKNOWN This, LPUNKNOWN pDevice, LPUNKNOWN pWindow,
-                                       DXGI_SWAP_CHAIN_DESC1 *pDesc, LPUNKNOWN pRestrictToOutput,
-                                       IDXGISwapChain1 **ppSwapChain)
+    if (!SyncInterval)
+        Flags |= DXGI_PRESENT_ALLOW_TEARING;
+
+    return fFlag ? __Present(This, SyncInterval, Flags) : DXGI_ERROR_DEVICE_RESET;
+}
+
+HRESULT _ResizeBuffers(LPUNKNOWN This, UINT BufferCount, UINT Width, UINT Height, DXGI_FORMAT NewFormat,
+                       UINT SwapChainFlags)
+{
+    return __ResizeBuffers(This, BufferCount, Width, Height, NewFormat,
+                           SwapChainFlags |= DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING);
+}
+
+HRESULT _CreateSwapChainForCoreWindow(LPUNKNOWN This, LPUNKNOWN pDevice, LPUNKNOWN pWindow,
+                                      DXGI_SWAP_CHAIN_DESC1 *pDesc, LPUNKNOWN pRestrictToOutput,
+                                      IDXGISwapChain1 **ppSwapChain)
 {
     if (!fFlag)
         fFlag = TRUE;
@@ -48,8 +59,8 @@ HRESULT _CreateSwapChainForCoreWindow_(LPUNKNOWN This, LPUNKNOWN pDevice, LPUNKN
         IUnknown_Release(pUnknown);
     }
 
-    pDesc->Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
-    return __CreateSwapChainForCoreWindow__(This, pDevice, pWindow, pDesc, pRestrictToOutput, ppSwapChain);
+    pDesc->Flags |= DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
+    return __CreateSwapChainForCoreWindow(This, pDevice, pWindow, pDesc, pRestrictToOutput, ppSwapChain);
 }
 
 DWORD ThreadProc(PVOID pParameter)
@@ -63,29 +74,31 @@ DWORD ThreadProc(PVOID pParameter)
     IDXGIFactory2 *pFactory = {};
     CreateDXGIFactory(&IID_IDXGIFactory2, (PVOID *)&pFactory);
 
-    MH_CreateHook(pFactory->lpVtbl->CreateSwapChainForCoreWindow, &_CreateSwapChainForCoreWindow_,
-                  (PVOID *)&__CreateSwapChainForCoreWindow__);
+    MH_Initialize();
+
+    MH_CreateHook(pFactory->lpVtbl->CreateSwapChainForCoreWindow, &_CreateSwapChainForCoreWindow,
+                  (PVOID *)&__CreateSwapChainForCoreWindow);
     MH_QueueEnableHook(pFactory->lpVtbl->CreateSwapChainForCoreWindow);
 
-    IDXGISwapChain *pChain = {};
-    D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
-                                  &(DXGI_SWAP_CHAIN_DESC){.BufferCount = 1,
+    IDXGISwapChain *pSwapChain = {};
+    D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, FALSE, NULL, FALSE, D3D11_SDK_VERSION,
+                                  &(DXGI_SWAP_CHAIN_DESC){.BufferCount = TRUE,
                                                           .BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM,
                                                           .BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
-                                                          .SampleDesc.Count = 1,
+                                                          .SampleDesc.Count = TRUE,
                                                           .Windowed = TRUE,
                                                           .OutputWindow = GetDesktopWindow()},
-                                  &pChain, NULL, NULL, NULL);
+                                  &pSwapChain, NULL, NULL, NULL);
 
-    MH_CreateHook(pChain->lpVtbl->Present, &_Present_, (PVOID *)&__Present__);
-    MH_QueueEnableHook(pChain->lpVtbl->Present);
+    MH_CreateHook(pSwapChain->lpVtbl->Present, &_Present, (PVOID *)&__Present);
+    MH_QueueEnableHook(pSwapChain->lpVtbl->Present);
 
-    MH_CreateHook(pChain->lpVtbl->ResizeBuffers, &_ResizeBuffers_, (PVOID *)&__ResizeBuffers__);
-    MH_QueueEnableHook(pChain->lpVtbl->ResizeBuffers);
+    MH_CreateHook(pSwapChain->lpVtbl->ResizeBuffers, &_ResizeBuffers, (PVOID *)&__ResizeBuffers);
+    MH_QueueEnableHook(pSwapChain->lpVtbl->ResizeBuffers);
 
     MH_ApplyQueued();
 
-    IDXGISwapChain_Release(pChain);
+    IDXGISwapChain_Release(pSwapChain);
 
     IDXGIFactory2_Release(pFactory);
 
@@ -96,6 +109,7 @@ BOOL DllMainCRTStartup(HINSTANCE hInstance, DWORD dwReason, PVOID pReserved)
 {
     if (dwReason == DLL_PROCESS_ATTACH)
     {
+        DisableThreadLibraryCalls(hInstance);
         if (GetCurrentPackageFamilyName(&(UINT32){}, NULL) != ERROR_INSUFFICIENT_BUFFER)
             return FALSE;
 
@@ -106,11 +120,7 @@ BOOL DllMainCRTStartup(HINSTANCE hInstance, DWORD dwReason, PVOID pReserved)
             return FALSE;
         }
 
-        DisableThreadLibraryCalls(hInstance);
-
-        MH_Initialize();
-
-        CloseHandle(CreateThread(NULL, (SIZE_T){}, ThreadProc, NULL, (DWORD){}, NULL));
+        QueueUserWorkItem(ThreadProc, NULL, WT_EXECUTEDEFAULT);
     }
     return TRUE;
 }
