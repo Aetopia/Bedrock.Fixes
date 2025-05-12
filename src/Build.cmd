@@ -7,7 +7,7 @@ gcc.exe -Os -Wl,--gc-sections -fvisibility=hidden -flto -shared -nostdlib -stati
 
 gcc.exe -Os -Wl,--gc-sections -fvisibility=hidden -flto -shared -nostdlib -static -s "Bedrock.UWP.c" -lMinHook -lKernel32 -lucrtbase -lKernel32 -lRuntimeObject -o "bin\Bedrock.UWP.dll"
 
-gcc.exe -Os -Wl,--gc-sections -fvisibility=hidden -flto -mwindows -nostdlib -static -s "Bedrock.Desktop.c" -lOle32 -lKernel32 -o "bin\Bedrock.Game.exe"
+gcc.exe -Os -Wl,--gc-sections -fvisibility=hidden -flto -mwindows -nostdlib -static -s "Bedrock.Desktop.c" -lOle32 -lKernel32 -o "bin\Bedrock.Desktop.exe"
 
 upx --best --lzma --brute --ultra-brute "bin\*">nul 2>&1
 powershell.exe -Command "$ProgressPreference = 'SilentlyContinue'; Compress-Archive -Path 'bin\*' -DestinationPath 'bin\Bedrock.Fixes.zip' -Force">nul 2>&1
