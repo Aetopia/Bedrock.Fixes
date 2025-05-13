@@ -11,19 +11,7 @@ HRESULT (*__Present)(LPUNKNOWN, UINT, UINT) = {};
 HRESULT (*__ResizeBuffers)(LPUNKNOWN, UINT, UINT, UINT, DXGI_FORMAT, UINT) = {};
 HRESULT (*__CreateSwapChainForCoreWindow)(LPUNKNOWN, LPUNKNOWN, LPUNKNOWN, DXGI_SWAP_CHAIN_DESC1 *, LPUNKNOWN,
                                           IDXGISwapChain1 **ppSwapChain) = {};
-
-PVOID __wrap_memcpy(PVOID Destination, PVOID Source, SIZE_T Count)
-{
-    __movsb(Destination, Source, Count);
-    return Destination;
-}
-
-PVOID __wrap_memset(PVOID Destination, BYTE Data, SIZE_T Count)
-{
-    __stosb(Destination, Data, Count);
-    return Destination;
-}
-
+                                          
 HRESULT _Present(LPUNKNOWN This, UINT SyncInterval, UINT Flags)
 {
     if (fForce)
