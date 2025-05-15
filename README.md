@@ -1,9 +1,9 @@
 
 > [!CAUTION]
-> Only supported on Windows x64!
+> **Only supported on Windows x64!**
 
 > [!IMPORTANT]
-> This project modularizes [Stonecutter](https://github.com/Aetopia/Stonecutter) into modular components to be used standalone.  
+> **This project modularizes [Stonecutter](https://github.com/Aetopia/Stonecutter) into modular components to be used standalone.**  
 
 # Bedrock Fixes
 A package of modifications for fixing bugs in Minecraft: Bedrock Edition.
