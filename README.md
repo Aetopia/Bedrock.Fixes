@@ -10,6 +10,14 @@ A package of modifications for fixing bugs in Minecraft: Bedrock Edition.
 
 ## Fixes
 
+|Issue|Summary|
+|-|-|
+|[MCPE-15796](https://bugs.mojang.com/browse/MCPE-15796)|Cursor is not recentered upon the opening of a new gui|
+|[MCPE-98861](https://bugs.mojang.com/browse/MCPE-98861)|Significant input delay on devices with Render Dragon|
+|[MCPE-109879](https://bugs.mojang.com/browse/MCPE-109879)|Getting disconnected from server when minimizing game or switching focus to another app|
+|[MCPE-110006](https://bugs.mojang.com/browse/MCPE-110006)|Vsync not being able to be turned off|
+|[MCPE-166745](https://bugs.mojang.com/browse/MCPE-166745)|FPS is capped at double the screen's refresh rate when v-sync is disabled|
+
 ### `Bedrock.DirectX`
 
 - Ability to properly disable V-Sync:
