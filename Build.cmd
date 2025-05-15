@@ -11,5 +11,5 @@ gcc.exe -Oz -Wl,--gc-sections,--exclude-all-symbols,--wrap=memcpy,--wrap=memset 
 
 gcc.exe -Oz -Wl,--gc-sections,--exclude-all-symbols -mwindows -nostdlib -static -s "Bedrock.Desktop.c" -lole32 -lkernel32 -o "bin\Bedrock.Desktop.exe"
 
-upx --best --lzma --brute --ultra-brute "bin\*"
+upx --ultra-brute "bin\*"
 powershell.exe -Command "$ProgressPreference = 'SilentlyContinue'; Compress-Archive -Path 'bin\*' -DestinationPath 'bin\Bedrock.Fixes.zip' -Force"
